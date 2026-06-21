@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("STUDENT")
+  reviews   Review[]
+  createdAt DateTime @default(now())
+}
+
+model Major {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  teachers Teacher[]
+}
+
+model Teacher {
+  id      String   @id @default(uuid())
+  name    String
+  title   String
+  majorId String
+  major   Major    @relation(fields: [majorId], references: [id])
+  courses Course[]
+  reviews Review[]
+}
+
+model Course {
+  id        String   @id @default(uuid())
+  name      String
+  code      String
+  teacherId String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  reviews   Review[]
+}
+
+model Review {
+  id                     String   @id @default(uuid())
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id])
+  teacherId              String
+  teacher                Teacher  @relation(fields: [teacherId], references: [id])
+  courseId               String
+  course                 Course   @relation(fields: [courseId], references: [id])
+  teachingAttitude       Int
+  clarity                Int
+  workloadReasonableness Int
+  gradingFriendliness    Int
+  comment                String   @default("")
+  status                 String   @default("PENDING")
+  createdAt              DateTime @default(now())
+
+  @@unique([userId, teacherId, courseId])
+}
