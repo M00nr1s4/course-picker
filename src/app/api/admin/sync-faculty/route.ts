@@ -3,19 +3,62 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
-  try {
-    const { teachers } = await req.json();
+const BNBU_BASE = "https://staff.bnbu.edu.cn";
+const PAGE_SIZE = 200;
 
-    if (!Array.isArray(teachers)) {
-      return NextResponse.json({ error: "无效的数据格式" }, { status: 400 });
+interface BNBUTeacher {
+  id: number;
+  name: string;
+  name_en: string;
+  email: string;
+  username: string;
+  title: string;
+  teacher_title: {
+    title: string;
+    title_en: string;
+    admin_title: string;
+    admin_title_en: string;
+  };
+  type: number;
+  room: string;
+}
+
+async function fetchAllBNBUTeachers(): Promise<BNBUTeacher[]> {
+  const all: BNBUTeacher[] = [];
+  let page = 0;
+  let lastPage = 1;
+
+  while (page <= lastPage) {
+    const url = `${BNBU_BASE}/teacher/teacher/list?access-token=&lang=cn&page=${page}&pageSize=${PAGE_SIZE}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.code !== 0) {
+      throw new Error(`BNBU API error at page ${page}: code=${json.code}`);
     }
 
-    // Build lookup maps
-    const bnbuByUsername = new Map<string, any>();
-    const bnbuByName = new Map<string, any>();
+    all.push(...json.data.data);
+    lastPage = json.data.last_page;
+    page++;
+  }
 
-    for (const t of teachers) {
+  return all;
+}
+
+export async function GET() {
+  try {
+    // Step 1: Fetch all BNBU teachers
+    const bnbuTeachers = await fetchAllBNBUTeachers();
+
+    if (bnbuTeachers.length === 0) {
+      return NextResponse.json({ error: "没有获取到 BNBU 教师数据" }, { status: 500 });
+    }
+
+    // Step 2: Build lookup maps
+    const bnbuByUsername = new Map<string, BNBUTeacher>();
+    const bnbuByName = new Map<string, BNBUTeacher>();
+
+    for (const t of bnbuTeachers) {
       bnbuByUsername.set(t.username, t);
       const cleanName = t.name.replace(/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)\s*/i, "").toLowerCase();
       bnbuByName.set(cleanName, t);
@@ -23,21 +66,19 @@ export async function POST(req: Request) {
       if (t.name_en) bnbuByName.set(t.name_en.toLowerCase(), t);
     }
 
-    // Get all CoursePicker teachers
+    // Step 3: Get all CoursePicker teachers
     const cpTeachers = await prisma.teacher.findMany();
 
     let matched = 0;
     let notFound = 0;
 
     for (const teacher of cpTeachers) {
-      let bnbuTeacher: any;
+      let bnbuTeacher: BNBUTeacher | undefined;
 
-      // Try by username
       if (teacher.bnbuUsername) {
         bnbuTeacher = bnbuByUsername.get(teacher.bnbuUsername);
       }
 
-      // Try by name
       if (!bnbuTeacher) {
         bnbuTeacher = bnbuByName.get(teacher.name.toLowerCase());
       }
@@ -53,10 +94,12 @@ export async function POST(req: Request) {
         });
         matched++;
       } else {
-        await prisma.teacher.update({
-          where: { id: teacher.id },
-          data: { status: "LEFT" },
-        });
+        if (teacher.status !== "LEFT") {
+          await prisma.teacher.update({
+            where: { id: teacher.id },
+            data: { status: "LEFT" },
+          });
+        }
         notFound++;
       }
     }
@@ -65,7 +108,7 @@ export async function POST(req: Request) {
       matched,
       notFound,
       total: cpTeachers.length,
-      bnbuTotal: teachers.length,
+      bnbuTotal: bnbuTeachers.length,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

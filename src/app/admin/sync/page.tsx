@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function AdminSyncPage() {
   const [syncing, setSyncing] = useState(false);
@@ -14,47 +14,23 @@ export default function AdminSyncPage() {
     setLogs([]);
 
     try {
-      // Fetch all teachers from BNBU
-      setLogs((p) => [...p, "正在连接 BNBU 师资系统..."]);
-      const allTeachers: any[] = [];
-      let page = 0;
-      let lastPage = 1;
-      const pageSize = 200;
+      setLogs((p) => [...p, "正在连接 BNBU 师资系统并同步..."]);
 
-      while (page <= lastPage) {
-        const res = await fetch(`https://staff.bnbu.edu.cn/teacher/teacher/list?access-token=&lang=cn&page=${page}&pageSize=${pageSize}`);
-        const json = await res.json();
-        if (json.code !== 0) {
-          setError(`API 请求失败: ${JSON.stringify(json)}`);
-          setSyncing(false);
-          return;
-        }
-        allTeachers.push(...json.data.data);
-        lastPage = json.data.last_page;
-        setLogs((p) => [...p, `  已获取第 ${page + 1}/${lastPage + 1} 页 (${json.data.data.length} 位老师)`]);
-        page++;
+      const res = await fetch("/api/admin/sync-faculty");
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `请求失败 (${res.status})`);
       }
 
-      setLogs((p) => [...p, `BNBU 共 ${allTeachers.length} 位老师，开始比对...`]);
+      const data = await res.json();
 
-      // Sync with backend
-      const syncRes = await fetch("/api/admin/sync-faculty", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teachers: allTeachers }),
-      });
-
-      if (!syncRes.ok) {
-        setError(`同步请求失败: ${syncRes.status}`);
-        setSyncing(false);
-        return;
-      }
-
-      const syncResult = await syncRes.json();
-      setLogs((p) => [...p, `  匹配成功 (在职): ${syncResult.matched}`]);
-      setLogs((p) => [...p, `  未匹配 (已离职): ${syncResult.notFound}`]);
-      setLogs((p) => [...p, `  已同步完成!`]);
-      setResult(`同步完成！${syncResult.matched} 位老师在职工，${syncResult.notFound} 位已离职`);
+      setLogs((p) => [...p, `  BNBU 总教师数: ${data.bnbuTotal}`]);
+      setLogs((p) => [...p, `  CoursePicker 教师数: ${data.total}`]);
+      setLogs((p) => [...p, `  匹配成功 (在职): ${data.matched}`]);
+      setLogs((p) => [...p, `  未匹配 (已离职): ${data.notFound}`]);
+      setLogs((p) => [...p, `  同步完成!`]);
+      setResult(`同步完成！${data.matched} 位老师在职，${data.notFound} 位已离职`);
     } catch (e: any) {
       setError(e.message || "同步失败");
     }
