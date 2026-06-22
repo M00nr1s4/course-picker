@@ -23,7 +23,7 @@ export default function Navbar() {
                   <Link href="/admin/reviews" className="text-sm text-[#6B7280] hover:text-[#7C3AED] transition-colors">管理 ⚙️</Link>
                 )}
                 <span className="text-sm text-[#6B7280]">{user?.name}</span>
-                <button onClick={() => signOut()} className="text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">退出</button>
+                <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">退出</button>
               </>
             ) : (
               <>

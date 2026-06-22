@@ -24,7 +24,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-[#7C3AED] via-[#8B5CF6] to-[#EC4899] px-6 pt-16 pb-24 text-center relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#7C3AED] via-[#8B5CF6] to-[#EC4899] px-6 pt-16 pb-8 text-center relative">
         <div className="absolute inset-0 opacity-10" style={{backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px)", backgroundSize: "40px 40px"}} />
         <div className="max-w-4xl mx-auto relative">
           <span className="inline-block text-5xl mb-4">🎓</span>
