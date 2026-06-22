@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 
@@ -15,6 +15,7 @@ export default function Navbar() {
             <span className="text-sm text-gray-500 hidden sm:inline">选课助手</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link href="/feedback" className="text-sm text-gray-500 hover:text-gray-700">意见反馈</Link>
             {session ? (
               <>
                 <Link href="/review" className="text-sm text-blue-600 hover:text-blue-800 font-medium">写评价</Link>

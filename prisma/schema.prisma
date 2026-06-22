@@ -8,13 +8,22 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   name      String
   password  String
-  role      String    @default("STUDENT")
+  role      String     @default("STUDENT")
   reviews   Review[]
-  createdAt DateTime  @default(now())
+  feedbacks Feedback[]
+  createdAt DateTime   @default(now())
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
 }
 
 model Major {
