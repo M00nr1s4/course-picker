@@ -9,14 +9,24 @@ export default function LoginPage() {
   async function handleSubmit(e:React.FormEvent) { e.preventDefault(); setError(""); const result = await signIn("credentials",{email,password,redirect:false}); if(result?.error) setError("邮箱或密码错误"); else {router.push("/");router.refresh();} }
   return (
     <div className="max-w-sm mx-auto px-6 py-20">
-      <h1 className="text-2xl font-bold text-[#1d1d1f] mb-8 text-center tracking-tight">登录</h1>
+      <div className="text-center mb-8">
+        <span className="text-5xl">👋</span>
+        <h1 className="text-2xl font-extrabold text-[#1F2937] mt-3 tracking-tight">欢迎回来</h1>
+        <p className="text-[#6B7280] mt-1">登录你的账号</p>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="邮箱" className="w-full bg-[#f5f5f7] rounded-[12px] px-4 py-3.5 text-[15px] text-[#1d1d1f] placeholder:text-[#aeaeb2] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white transition-all" />
-        <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="密码" className="w-full bg-[#f5f5f7] rounded-[12px] px-4 py-3.5 text-[15px] text-[#1d1d1f] placeholder:text-[#aeaeb2] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white transition-all" />
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-        <button type="submit" className="w-full bg-[#0071e3] text-white py-3 rounded-[12px] text-[15px] font-medium hover:bg-[#0077ed] transition-colors">登录</button>
+        <div className="flex items-center gap-3 bg-white rounded-[20px] border border-[#E5E7EB] px-4 py-1 focus-within:ring-2 focus-within:ring-[#7C3AED]/20 focus-within:shadow-[0_4px_12px_rgba(124,58,237,0.08)] transition-all">
+          <span className="text-lg">📧</span>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="邮箱" className="flex-1 bg-transparent py-3.5 text-[15px] text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none" />
+        </div>
+        <div className="flex items-center gap-3 bg-white rounded-[20px] border border-[#E5E7EB] px-4 py-1 focus-within:ring-2 focus-within:ring-[#7C3AED]/20 focus-within:shadow-[0_4px_12px_rgba(124,58,237,0.08)] transition-all">
+          <span className="text-lg">🔒</span>
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="密码" className="flex-1 bg-transparent py-3.5 text-[15px] text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none" />
+        </div>
+        {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
+        <button type="submit" className="w-full bg-gradient-to-r from-[#7C3AED] to-[#EC4899] text-white py-3.5 rounded-[20px] text-[15px] font-bold shadow-[0_6px_16px_rgba(124,58,237,0.3)] hover:shadow-[0_8px_24px_rgba(124,58,237,0.4)] hover:-translate-y-0.5 transition-all">登录 🚀</button>
       </form>
-      <p className="text-sm text-[#86868b] text-center mt-6">还没有账号？<Link href="/auth/register" className="text-[#0071e3] hover:underline">注册</Link></p>
+      <p className="text-sm text-[#6B7280] text-center mt-6">还没有账号？<Link href="/auth/register" className="text-[#7C3AED] font-semibold hover:underline">注册</Link></p>
     </div>
   );
 }
