@@ -6,7 +6,7 @@ interface SyncResult {
   unmatched: { username: string; name: string; title: string; email: string }[];
 }
 
-interface CourseResult {
+interface CourseResult { note?: string;
   coursesCreated: number; coursesSkipped: number; teachersWithCourses: number;
   totalTeachers: number; results: string[];
 }
@@ -70,7 +70,48 @@ export default function AdminSyncPage() {
     setImporting(false);
   }
 
-  const major = majors.find((m) => m.id === selectedMajor);
+  
+      {/* Course Sync Section */}
+      {result && (
+        <div className="mt-8">
+          <hr className="border-[#E5E7EB] mb-6" />
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-lg">📚</span>
+            <h2 className="text-lg font-bold text-[#1F2937]">课程同步</h2>
+          </div>
+          <p className="text-sm text-[#6B7280] mb-4">
+            从 BNBU 老师资料的"教学"栏目中提取课程信息并同步到本网站。
+          </p>
+          <button onClick={syncCourses} disabled={courseSyncing} className="bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.4)] transition-all disabled:opacity-50">{courseSyncing?"同步中...":"同步课程 📚"}</button>
+
+          {courseResult && (
+            <div className="mt-4 bg-[#ECFDF5] border border-[#6EE7B7] rounded-[20px] p-4">
+              <p className="text-sm font-bold text-[#065F46] mb-1">✅ 课程同步完成</p>
+              <p className="text-sm text-[#065F46]">新增 {courseResult.coursesCreated} 门，涉及 {courseResult.teachersWithCourses} 位老师</p>
+              {courseResult.coursesSkipped > 0 && <p className="text-sm text-[#065F46]">{courseResult.coursesSkipped} 门已跳过</p>}
+              <p className="text-xs text-[#065F46] mt-1 opacity-70">数据来源: {courseResult.note || "BNBU 教师资料"}</p>
+              {courseResult.results.length > 0 && (
+                <div className="mt-2 max-h-32 overflow-y-auto">
+                  {courseResult.results.map((r,i) => <p key={i} className="text-xs text-[#065F46]">{r}</p>)}
+                </div>
+              )}
+            </div>
+          )}
+          {courseResult && courseResult.coursesCreated === 0 && (
+            <div className="mt-4 bg-[#FFFBEB] border border-[#FCD34D] rounded-[20px] p-4 text-sm text-[#92400E]">
+              ⚠️ 未找到可导入的新课程。可能老师资料中未填写"教学"栏目，或课程已全部导入。
+            </div>
+          )}
+
+          {/* Delete all courses - danger zone */}
+          <div className="mt-6 p-4 border border-red-200 rounded-[20px] bg-red-50">
+            <p className="text-sm font-bold text-red-700 mb-2">⚠️ 危险操作</p>
+            <p className="text-xs text-red-600 mb-3">清空所有课程数据（包含已导入的课程），此操作不可撤销。</p>
+            <button onClick={async()=>{if(!confirm("确定要删除所有课程吗？此操作不可撤销！"))return;try{const r=await fetch("/api/admin/sync-courses",{method:"DELETE"});if(r.ok){alert("所有课程已删除");setLogs(p=>[...p,"已清空所有课程"])}else{alert("删除失败")}}catch(e){alert("删除失败")}}} className="bg-red-500 text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-red-600 transition-all">清空所有课程 🗑️</button>
+          </div>
+        </div>
+      )}
+const major = majors.find((m) => m.id === selectedMajor);
 
   return (
     <div>

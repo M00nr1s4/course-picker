@@ -7,17 +7,15 @@ const BNBU_BASE = "https://staff.bnbu.edu.cn";
 const PAGE_SIZE = 200;
 
 interface BNBUTeacher {
-  id: number; name: string; name_en: string; email: string;
-  username: string; title: string;
-  info: { cn?: { academic?: string }; en?: { academic?: string } };
+  id: number; name: string; username: string;
+  info?: { cn?: { academic?: string }; en?: { academic?: string } };
 }
 
 async function fetchAllBNBUTeachers(): Promise<BNBUTeacher[]> {
   const all: BNBUTeacher[] = [];
   let page = 0, lastPage = 1;
   while (page <= lastPage) {
-    const url = `${BNBU_BASE}/teacher/teacher/list?access-token=&lang=cn&page=${page}&pageSize=${PAGE_SIZE}`;
-    const res = await fetch(url);
+    const res = await fetch(`${BNBU_BASE}/teacher/teacher/list?access-token=&lang=cn&page=${page}&pageSize=${PAGE_SIZE}`);
     const json = await res.json();
     if (json.code !== 0) throw new Error(`BNBU API error at page ${page}`);
     all.push(...json.data.data);
@@ -29,22 +27,13 @@ async function fetchAllBNBUTeachers(): Promise<BNBUTeacher[]> {
 
 function parseCourses(text: string | null | undefined): string[] {
   if (!text || !text.trim()) return [];
-  return text.split("\n")
-    .map((s) => s.replace(/^[•●\-]\s*/, "").trim())
-    .filter((s) => s.length > 0 && s.length < 100);
+  return text.split("\n").map(s => s.replace(/^[•●\-]\s*/, "").trim()).filter(s => s.length > 0 && s.length < 100);
 }
 
+// GET: sync courses from BNBU teacher info API ("教授课程" field)
 export async function GET() {
   try {
-    const bnbuTeachers = await fetchAllBNBUTeachers();
-    if (bnbuTeachers.length === 0) {
-      return NextResponse.json({ error: "没有获取到 BNBU 数据" }, { status: 500 });
-    }
-
-    // Build a lookup by username
-    const bnbuByUsername = new Map(bnbuTeachers.map((t) => [t.username, t]));
-
-    // Get all teachers in CoursePicker that have a bnbuUsername
+    // Get all CoursePicker teachers with bnbuUsername
     const cpTeachers = await prisma.teacher.findMany({
       where: { bnbuUsername: { not: null } },
       include: { courses: true },
@@ -53,42 +42,67 @@ export async function GET() {
     let coursesCreated = 0;
     let coursesSkipped = 0;
     let teachersWithCourses = 0;
+    let apiFetched = 0;
     const results: string[] = [];
 
     for (const teacher of cpTeachers) {
       if (!teacher.bnbuUsername) continue;
 
-      const bnbuTeacher = bnbuByUsername.get(teacher.bnbuUsername);
-      if (!bnbuTeacher) continue;
+      // Fetch teacher info from BNBU API (form-urlencoded)
+      let courseNames: string[] = [];
 
-      // Parse courses from academic fields
-      const cnCourses = parseCourses(bnbuTeacher.info?.cn?.academic);
-      const enCourses = parseCourses(bnbuTeacher.info?.en?.academic);
-      const allCourseNames = Array.from(new Set([...cnCourses, ...enCourses]));
+      try {
+        const res = await fetch(`${BNBU_BASE}/api/teacher/v1/teacher/info?access-token=`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" },
+          body: new URLSearchParams({ username: teacher.bnbuUsername }).toString(),
+        });
+        const json = await res.json();
 
-      if (allCourseNames.length === 0) continue;
+        if (json.code === 0 && json.data?.content) {
+          apiFetched++;
+          for (const item of json.data.content) {
+            if (item.field === "教授课程" || item.field === "courses_taught" || item.field === "教學") {
+              courseNames = parseCourses(item.content);
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to fetch info for ${teacher.bnbuUsername}:`, e);
+      }
 
-      const existingNames = new Set(teacher.courses.map((c) => c.name));
+      // Fallback: parse from list API academic field
+      if (courseNames.length === 0) {
+        const bnbuTeachers = await fetchAllBNBUTeachers();
+        const bt = bnbuTeachers.find(t => t.username === teacher.bnbuUsername);
+        if (bt) {
+          courseNames = [
+            ...parseCourses(bt.info?.cn?.academic),
+            ...parseCourses(bt.info?.en?.academic),
+          ];
+        }
+      }
+
+      if (courseNames.length === 0) continue;
+
+      const existingNames = new Set(teacher.courses.map(c => c.name));
       let created = 0;
       let skipped = 0;
 
-      for (let i = 0; i < allCourseNames.length; i++) {
-        const courseName = allCourseNames[i];
-        if (existingNames.has(courseName)) {
-          skipped++;
-          continue;
-        }
+      for (let i = 0; i < courseNames.length; i++) {
+        const name = courseNames[i];
+        if (existingNames.has(name)) { skipped++; continue; }
 
-        // Check if any other teacher already has this course
-        const existingCourse = await prisma.course.findFirst({
-          where: { name: courseName, teacherId: teacher.id },
-        });
-        if (existingCourse) { skipped++; continue; }
-
-        const code = `BNBU-${teacher.bnbuUsername.slice(0, 8)}-${String(i + 1).padStart(2, "0")}`;
+        const existing = await prisma.course.findFirst({ where: { name, teacherId: teacher.id } });
+        if (existing) { skipped++; continue; }
 
         await prisma.course.create({
-          data: { name: courseName, code, teacherId: teacher.id },
+          data: {
+            name,
+            code: `BNBU-${teacher.bnbuUsername!.slice(0, 8)}-${String(i + 1).padStart(2, "0")}`,
+            teacherId: teacher.id,
+          },
         });
         created++;
       }
@@ -97,7 +111,7 @@ export async function GET() {
         teachersWithCourses++;
         coursesCreated += created;
         coursesSkipped += skipped;
-        results.push(`${teacher.name}: +${created} 门课程`);
+        results.push(`${teacher.name}: +${created} 门`);
       }
     }
 
@@ -106,8 +120,20 @@ export async function GET() {
       coursesSkipped,
       teachersWithCourses,
       totalTeachers: cpTeachers.length,
-      results: results.slice(0, 20),
+      apiFetched,
+      results: results.slice(0, 30),
+      note: "课程数据来源：BNBU 教师详情页 - 教学栏目",
     });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
+// DELETE: delete all courses
+export async function DELETE() {
+  try {
+    const count = await prisma.course.deleteMany();
+    return NextResponse.json({ deleted: count.count });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
