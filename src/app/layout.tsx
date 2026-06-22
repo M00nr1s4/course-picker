@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -11,14 +11,10 @@ export const metadata: Metadata = {
   description: "查看老师评分，做出更好的选课决策",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
-      <body className={`${inter.className} bg-gray-50 min-h-screen`}>
+      <body className={`${inter.className} bg-[#f5f5f7] text-[#1d1d1f] min-h-screen antialiased`}>
         <Providers>
           <Navbar />
           <main>{children}</main>

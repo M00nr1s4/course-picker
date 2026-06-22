@@ -1,21 +1,19 @@
-﻿interface StarRatingProps {
+interface Props {
   value: number | null;
   size?: "sm" | "md" | "lg";
 }
 
-export default function StarRating({ value, size = "md" }: StarRatingProps) {
-  if (value === null) return <span className="text-gray-400 text-sm">暂无评分</span>;
+export default function StarRating({ value, size = "md" }: Props) {
+  if (value === null) return <span className="text-sm text-[#aeaeb2]">暂无评分</span>;
 
-  const sizeClass = size === "sm" ? "text-sm" : size === "lg" ? "text-xl" : "text-base";
+  const sz = size === "sm" ? "text-sm" : size === "lg" ? "text-2xl" : "text-base";
   const full = Math.floor(value);
-  const half = value - full >= 0.5;
+  const hasHalf = value - full >= 0.5;
 
   return (
-    <span className={`${sizeClass} text-yellow-400`} title={`${value.toFixed(1)} 分`}>
-      {"★".repeat(full)}
-      {half ? "½" : ""}
-      {"☆".repeat(5 - full - (half ? 1 : 0))}
-      <span className="text-gray-500 ml-1">{value.toFixed(1)}</span>
+    <span className={`${sz} text-[#ff9f0a] tracking-wide`} title={`${value.toFixed(1)} 分`}>
+      {"★".repeat(full)}{hasHalf ? "½" : ""}{"☆".repeat(5 - full - (hasHalf ? 1 : 0))}
+      <span className="text-[#86868b] ml-1.5 font-medium">{value.toFixed(1)}</span>
     </span>
   );
 }
