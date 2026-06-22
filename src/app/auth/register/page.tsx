@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,12 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const res = await fetch("/api/auth/register", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,name,password}) });
-    if (!res.ok) { const d=await res.json(); setError(d.error||"注册失败"); return; }
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, name, password }),
+    });
+    if (!res.ok) { const d = await res.json(); setError(d.error || "注册失败"); return; }
     const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.ok) { router.push("/"); router.refresh(); }
   }
