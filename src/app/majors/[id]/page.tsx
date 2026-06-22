@@ -15,8 +15,7 @@ export default async function MajorPage({
   if (!major) notFound();
 
   const teachers = await prisma.teacher.findMany({
-    where: { status: "ACTIVE",
-    where: { majorId: params.id },
+    where: { status: "ACTIVE", majorId: params.id },
     include: {
       reviews: {
         where: { status: "APPROVED" },
