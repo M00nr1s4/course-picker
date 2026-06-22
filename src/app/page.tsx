@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import TeacherCard from "@/components/TeacherCard";
 import SearchBar from "@/components/SearchBar";
@@ -12,6 +12,7 @@ export default async function HomePage() {
       orderBy: { name: "asc" },
     }),
     prisma.teacher.findMany({
+    where: { status: "ACTIVE" },
       include: {
         major: { select: { name: true } },
         reviews: {

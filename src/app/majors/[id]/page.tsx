@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import TeacherCard from "@/components/TeacherCard";
 
@@ -15,6 +15,7 @@ export default async function MajorPage({
   if (!major) notFound();
 
   const teachers = await prisma.teacher.findMany({
+    where: { status: "ACTIVE",
     where: { majorId: params.id },
     include: {
       reviews: {

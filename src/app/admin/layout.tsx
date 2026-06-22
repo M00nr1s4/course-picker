@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const items = [
@@ -6,6 +6,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/majors", label: "专业管理" },
     { href: "/admin/teachers", label: "老师管理" },
     { href: "/admin/courses", label: "课程管理" },
+    { href: "/admin/sync", label: "师资同步" },
   ];
 
   return (

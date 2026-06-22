@@ -24,13 +24,15 @@ model Major {
 }
 
 model Teacher {
-  id      String   @id @default(uuid())
-  name    String
-  title   String
-  majorId String
-  major   Major    @relation(fields: [majorId], references: [id])
-  courses Course[]
-  reviews Review[]
+  id           String   @id @default(uuid())
+  name         String
+  title        String
+  majorId      String
+  major        Major    @relation(fields: [majorId], references: [id])
+  status       String   @default("ACTIVE")
+  bnbuUsername String?
+  courses      Course[]
+  reviews      Review[]
 }
 
 model Course {

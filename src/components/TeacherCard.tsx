@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import StarRating from "./StarRating";
 
 interface TeacherCardProps {
@@ -8,17 +8,23 @@ interface TeacherCardProps {
   majorName: string;
   avgRating: number | null;
   reviewCount: number;
+  status?: string;
 }
 
-export default function TeacherCard({ id, name, title, majorName, avgRating, reviewCount }: TeacherCardProps) {
+export default function TeacherCard({ id, name, title, majorName, avgRating, reviewCount, status }: TeacherCardProps) {
   return (
     <Link href={`/teachers/${id}`}>
       <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-semibold text-gray-900">{name}</h3>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-xs text-gray-400 mt-1">{majorName}</p>
+          <div className="flex items-start gap-2">
+            <div>
+              <h3 className="font-semibold text-gray-900">{name}</h3>
+              <p className="text-sm text-gray-500">{title}</p>
+              <p className="text-xs text-gray-400 mt-1">{majorName}</p>
+            </div>
+            {status === "LEFT" && (
+              <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded whitespace-nowrap">已离职</span>
+            )}
           </div>
           <div className="text-right">
             <StarRating value={avgRating} size="sm" />

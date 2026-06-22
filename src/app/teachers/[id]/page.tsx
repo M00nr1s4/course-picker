@@ -32,8 +32,15 @@ export default async function TeacherPage({ params }: { params: { id: string } }
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{teacher.name}</h1>
-        <p className="text-gray-500 mt-1">{teacher.title} · {teacher.major.name}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{teacher.name}</h1>
+            <p className="text-gray-500 mt-1">{teacher.title} · {teacher.major.name}</p>
+          </div>
+          {teacher.status === "LEFT" && (
+            <span className="text-sm bg-red-100 text-red-600 px-2.5 py-1 rounded font-medium">已离职</span>
+          )}
+        </div>
 
         {count > 0 ? (
           <div className="mt-6">
