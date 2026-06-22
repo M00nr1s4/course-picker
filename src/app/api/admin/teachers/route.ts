@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
 export const dynamic = "force-dynamic";
+export async function POST(req: Request) {
   const { name, title, majorId } = await req.json();
   if (!name?.trim() || !majorId) return NextResponse.json({ error: "老师姓名和专业不能为空" }, { status: 400 });
   const teacher = await prisma.teacher.create({ data: { name, title: title || "讲师", majorId } });

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
 export const dynamic = "force-dynamic";
+export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const reviews = await prisma.review.findMany({
     where: { teacherId: params.id, status: "APPROVED" },
     include: { user: { select: { name: true } }, course: { select: { name: true } } },
