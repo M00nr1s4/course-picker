@@ -1,9 +1,10 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
+export const dynamic = "force-dynamic";
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
 

@@ -1,7 +1,8 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
+export const dynamic = "force-dynamic";
   const teacherId = req.nextUrl.searchParams.get("teacherId");
   const courses = await prisma.course.findMany({
     where: teacherId ? { teacherId } : {},

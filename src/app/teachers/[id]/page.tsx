@@ -2,6 +2,8 @@
 import { notFound } from "next/navigation";
 import StarRating from "@/components/StarRating";
 
+export const dynamic = "force-dynamic";
+
 export default async function TeacherPage({ params }: { params: { id: string } }) {
   const teacher = await prisma.teacher.findUnique({
     where: { id: params.id },

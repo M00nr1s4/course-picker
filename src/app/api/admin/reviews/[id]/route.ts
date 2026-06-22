@@ -1,7 +1,8 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export const dynamic = "force-dynamic";
   const { action } = await req.json();
   if (action !== "approve" && action !== "reject")
     return NextResponse.json({ error: "无效的操作" }, { status: 400 });

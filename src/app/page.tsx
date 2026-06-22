@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import TeacherCard from "@/components/TeacherCard";
 import SearchBar from "@/components/SearchBar";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [majors, topTeachers] = await Promise.all([
     prisma.major.findMany({

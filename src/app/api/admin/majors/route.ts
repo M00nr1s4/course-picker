@@ -1,7 +1,8 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
+export const dynamic = "force-dynamic";
   const { name } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "专业名称不能为空" }, { status: 400 });
   const existing = await prisma.major.findUnique({ where: { name } });

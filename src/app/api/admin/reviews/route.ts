@@ -1,7 +1,8 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
+export const dynamic = "force-dynamic";
   const status = req.nextUrl.searchParams.get("status") || "PENDING";
   const reviews = await prisma.review.findMany({
     where: { status: status as any },

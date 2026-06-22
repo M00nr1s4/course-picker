@@ -1,7 +1,8 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
+export const dynamic = "force-dynamic";
   const q = req.nextUrl.searchParams.get("q") || "";
   if (!q.trim()) return NextResponse.json({ teachers: [], courses: [], majors: [] });
 
