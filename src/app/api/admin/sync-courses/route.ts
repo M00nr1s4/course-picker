@@ -45,14 +45,19 @@ export async function GET() {
     let apiFetched = 0;
     const results: string[] = [];
 
-    for (const teacher of cpTeachers) {
+    
+    // Pre-fetch BNBU teacher list once (performance)
+    const bnbuList = await fetchAllBNBUTeachers();
+    const bnbuByUsername = new Map(bnbuList.map(t => [t.username, t]));
+
+for (const teacher of cpTeachers) {
       if (!teacher.bnbuUsername) continue;
 
       // Fetch teacher info from BNBU API (form-urlencoded)
       let courseNames: string[] = [];
 
       try {
-        const res = await fetch(`${BNBU_BASE}/api/teacher/v1/teacher/info?access-token=`, {
+        const res = await fetch(`${BNBU_BASE}/api/teacher/v1/teacher/info?access-token=&lang=cn`, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" },
           body: new URLSearchParams({ username: teacher.bnbuUsername }).toString(),
@@ -72,10 +77,9 @@ export async function GET() {
         console.warn(`Failed to fetch info for ${teacher.bnbuUsername}:`, e);
       }
 
-      // Fallback: parse from list API academic field
+      // Fallback: parse from pre-fetched list API academic field
       if (courseNames.length === 0) {
-        const bnbuTeachers = await fetchAllBNBUTeachers();
-        const bt = bnbuTeachers.find(t => t.username === teacher.bnbuUsername);
+        const bt = bnbuByUsername.get(teacher.bnbuUsername);
         if (bt) {
           courseNames = [
             ...parseCourses(bt.info?.cn?.academic),

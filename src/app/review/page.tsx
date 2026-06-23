@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import StarRatingInput from "@/components/StarRatingInput";
@@ -11,7 +11,7 @@ export default function ReviewPage() {
   const [courses, setCourses] = useState<{id:string;name:string;code:string}[]>([]);
   const [selMajor, setSelMajor] = useState(""); const [selTeacher, setSelTeacher] = useState(""); const [selCourse, setSelCourse] = useState("");
   const [ratings, setRatings] = useState({teachingAttitude:0,clarity:0,workloadReasonableness:0,gradingFriendliness:0});
-  const [comment, setComment] = useState(""); const [error, setError] = useState(""); const [success, setSuccess] = useState(false); const [loading, setLoading] = useState(false);
+  const [comment, setComment] = useState(""); const [error, setError] = useState(""); const [success, setSuccess] = useState(false); const searchTimer = useRef<ReturnType<typeof setTimeout>|null>(null); const [loading, setLoading] = useState(false);
   const [searchQ, setSearchQ] = useState(""); const [searchResults, setSearchResults] = useState<any[]>([]); const [showSearch, setShowSearch] = useState(false);
   // Selected teacher via search (bypasses teacher dropdown)
   const [pickedTeacher, setPickedTeacher] = useState<{id:string;name:string;title:string;majorName:string;majorId:string}|null>(null);
@@ -28,10 +28,14 @@ export default function ReviewPage() {
     }
   }, [selTeacher]);
 
-  async function doSearch(q:string) {
-    setSearchQ(q); if (!q.trim()) { setSearchResults([]); setShowSearch(false); return; }
-    const res = await fetch(`/api/teachers/search?q=${encodeURIComponent(q)}`);
-    const data = await res.json(); setSearchResults(data.teachers); setShowSearch(true);
+  function doSearch(q:string) {
+    setSearchQ(q);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!q.trim()) { setSearchResults([]); setShowSearch(false); return; }
+    searchTimer.current = setTimeout(async () => {
+      const res = await fetch(`/api/teachers/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json(); setSearchResults(data.teachers); setShowSearch(true);
+    }, 250);
   }
 
   function pickFromSearch(t:{id:string;name:string;title:string;majorName:string;majorId:string}) {
@@ -53,7 +57,7 @@ export default function ReviewPage() {
 
   async function handleSubmit(e:React.FormEvent) {
     e.preventDefault(); setError("");
-    if (!selTeacher || !selCourse) { setError("请选择老师和课程"); return; }
+    if (!(pickedTeacher?.id ?? selTeacher) || !selCourse) { setError("请选择老师和课程"); return; }
     if (Object.values(ratings).some(v=>v===0)) { setError("请完成所有维度的评分"); return; }
     setLoading(true);
     const res = await fetch("/api/reviews", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({teacherId:selTeacher,courseId:selCourse,...ratings,comment}) });
